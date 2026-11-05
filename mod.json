@@ -1,8 +1,8 @@
 {
- "id": "solo", "version": "0.1",
+ "id": "solo", "version": "0.2",
  "license": "GPL-2.0-or-later",
  "title": "SOLO & MUTE GROUPS", "category": "Performance", "author": "irpina",
- "description": "Solo and four mute groups for the Digitone mk1 and Digitone Keys, on the stock global mutes (FUNC + a track key). Hold a track key and press FUNC: that track plays alone among its four (the synth tracks, or the MIDI tracks); the same again gives the mutes back as they were. MUTE GROUPS in the Mod Menu (hold a track key) stores the mutes of all eight tracks as group 1-4 and recalls them, saved with the project; SOLO there solos the held track. OS 1.43 and 1.44 (it names no firmware address: its 1.44 port is empty). Needs core-dn1 5.0.1.",
+ "description": "Solo and four mute groups for the Digitone mk1 and Digitone Keys, on the stock global mutes (FUNC + a track key). Hold PAGE and press a track key: that track plays alone among its four (the synth tracks, or the MIDI tracks); the same again gives the mutes back as they were. MUTE GROUPS in the Mod Menu (hold a track key) stores the mutes of all eight tracks as group 1-4 and recalls them, saved with the project; SOLO there solos the held track. OS 1.43 and 1.44 (it names no firmware address: its 1.44 port is empty). Needs core-dn1 5.0.1.",
  "device": "digitone-mk1", "os": "1.43",
  "ports": {"1.44": {}},
  "sources": ["solo.c"],

@@ -2,12 +2,12 @@
 /* SOLO & MUTE GROUPS for the Digitone mk1 and Digitone Keys (core-dn1 5.0.1), on the stock global mutes, the ones
  * FUNC + a track key toggles (bit t of core_mutes() for track t: 0-3 the synth tracks, 4-7 the MIDI tracks).
  *
- * Solo: hold a track key and press FUNC (FUNC first and then a track key is the stock mute, untouched). The track
- * plays alone among its four: every other synth track is muted, or every other MIDI track for a MIDI track, and
- * the solo track is unmuted. The same again (that track held, FUNC) gives the four their mutes back as they were
- * before the solo. A mute the stock sets meanwhile (FUNC + a track key) ends the solo where it is: nothing is
- * given back. SOLO in the Mod Menu solos the held track the same way. A solo's FUNC press and release are taken,
- * so the FUNC overlay does not flash.
+ * Solo: hold PAGE and press a track key (the stock only selects the track for that). The track plays alone among
+ * its four: every other synth track is muted, or every other MIDI track while the track keys are on the MIDI
+ * tracks, and the solo track is unmuted. The same again (PAGE, that track key) gives the four their mutes back as
+ * they were before the solo. A mute the stock sets meanwhile (FUNC + a track key) ends the solo where it is:
+ * nothing is given back. SOLO in the Mod Menu solos the held track the same way. A solo's track key press,
+ * repeats and release are taken, so the active track stays; PAGE itself is left to the stock.
  *
  * Mute groups: MUTE GROUPS in the Mod Menu opens RECALL 1-4 and STORE 1-4. STORE n keeps the eight tracks' mutes
  * as group n; RECALL n sets them (a group never stored does nothing). The groups are saved with the project
@@ -17,7 +17,7 @@
 typedef void (*rect_fn)(void *bmp, int x0, int y0, int x1, int y1, int colour);
 typedef void (*text_fn)(void *bmp, const void *font, int x, int y, int maxlen, const char *fmt, ...);
 
-#define KEY_FUNC  1
+#define KEY_PAGE  19
 #define KEY_T1    42
 #define GROUPS    4
 
@@ -27,8 +27,8 @@ struct save {
 };
 static struct save save;
 
-static int32_t held_key;                /* the track key down on its own, or 0 */
-static int32_t func_taken;              /* FUNC's press was a solo: take its repeats and release */
+static int32_t page_down;               /* PAGE is held */
+static uint32_t taken;                  /* bit k: track key k's press was a solo: take its repeats and release */
 static int32_t soloed = -1;             /* the solo track, or -1 */
 static uint32_t before;                 /* the mutes before the solo */
 static int32_t busy;                    /* our own mute writes: solo_mute ignores them */
@@ -79,24 +79,24 @@ int32_t solo_key(void *brain, void *ev)
 {
     int32_t key = CORE_KEY_ID(ev);
     uint32_t flags = CORE_KEY_FLAGS(ev);
+    int32_t up = (flags & CORE_KEY_UP) || !(flags & CORE_KEY_DOWN);  /* flags 0: released after another key */
+    uint32_t bit;
     (void)brain;
-    if (key >= KEY_T1 && key < KEY_T1 + 4) {
-        if ((flags & CORE_KEY_UP) || !(flags & CORE_KEY_DOWN))
-            held_key = 0;               /* released (flags 0 when FUNC went down between) */
-        else if (!(flags & (CORE_KEY_FUNC | CORE_KEY_REPEAT)))
-            held_key = key;
+    if (key == KEY_PAGE) {
+        page_down = !up;
         return 0;
     }
-    if (key != KEY_FUNC)
+    if (key < KEY_T1 || key >= KEY_T1 + 4)
         return 0;
-    if (func_taken) {                   /* the solo's FUNC: its repeats and release */
-        if ((flags & CORE_KEY_UP) || !(flags & CORE_KEY_DOWN))
-            func_taken = 0;
+    bit = 1u << (key - KEY_T1);
+    if (taken & bit) {                  /* the solo's track key: its repeats and release */
+        if (up)
+            taken &= ~bit;
         return 1;
     }
-    if ((flags & CORE_KEY_DOWN) && !(flags & CORE_KEY_REPEAT) && held_key) {
-        solo(fw_active_track);          /* the track key selected its track as it went down */
-        func_taken = 1;
+    if (!up && page_down && !(flags & (CORE_KEY_FUNC | CORE_KEY_REPEAT))) {
+        solo((fw_active_track & 4) | (key - KEY_T1));   /* the four the track keys are on */
+        taken |= bit;
         return 1;
     }
     return 0;
